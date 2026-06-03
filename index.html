@@ -1702,6 +1702,7 @@
             data-i18n-placeholder="waitlist_country_placeholder">
         </div>
         <button type="submit" class="submit-btn" data-i18n="waitlist_btn">Notify Me</button>
+        <div id="waitlistMsg" style="margin-top: 15px; font-size: 14px; font-weight: 500; display: none;"></div>
       </form>
     </div>
   </section>
@@ -1852,6 +1853,9 @@
         submitBtn.disabled = true;
         submitBtn.textContent = translateString('processing_text') || 'Processing...';
 
+        const msgDiv = document.getElementById('waitlistMsg');
+        if (msgDiv) msgDiv.style.display = 'none';
+
         try {
           const response = await fetch('https://formspree.io/f/mpqezpdn', {
             method: 'POST',
@@ -1862,20 +1866,32 @@
             body: JSON.stringify({ name, email, country })
           });
           
+          if (msgDiv) msgDiv.style.display = 'block';
+
           if (response.ok) {
-            alert("Thanks! We have received your information.");
+            if (msgDiv) {
+              msgDiv.style.color = '#4caf50'; // Green
+              msgDiv.textContent = "Thanks! We have received your information.";
+            }
             waitlistForm.reset();
           } else {
             const data = await response.json();
-            if (data && data.errors) {
-              alert(data.errors.map(error => error.message).join(", "));
-            } else {
-              alert("Oops! There was a problem submitting your form.");
+            if (msgDiv) {
+              msgDiv.style.color = '#f44336'; // Red
+              if (data && data.errors) {
+                msgDiv.textContent = data.errors.map(error => error.message).join(", ");
+              } else {
+                msgDiv.textContent = "Oops! There was a problem submitting your form.";
+              }
             }
           }
         } catch (error) {
           console.error("Error submitting form:", error);
-          alert("Oops! There was a problem submitting your form.");
+          if (msgDiv) {
+            msgDiv.style.display = 'block';
+            msgDiv.style.color = '#f44336';
+            msgDiv.textContent = "Oops! There was a problem submitting your form.";
+          }
         }
 
         submitBtn.disabled = false;
