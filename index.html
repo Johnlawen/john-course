@@ -1688,15 +1688,18 @@
       <form id="waitlistForm">
         <div class="form-group">
           <label for="waitlistName" data-i18n="form_name">Full Name</label>
-          <input type="text" id="waitlistName" class="form-control" required placeholder="samer doe" data-i18n-placeholder="waitlist_name_placeholder">
+          <input type="text" id="waitlistName" class="form-control" required placeholder="samer doe"
+            data-i18n-placeholder="waitlist_name_placeholder">
         </div>
         <div class="form-group">
           <label for="waitlistEmail" data-i18n="form_email">Email Address</label>
-          <input type="email" id="waitlistEmail" class="form-control" required placeholder="samer@example.com" data-i18n-placeholder="waitlist_email_placeholder">
+          <input type="email" id="waitlistEmail" class="form-control" required placeholder="samer@example.com"
+            data-i18n-placeholder="waitlist_email_placeholder">
         </div>
         <div class="form-group">
           <label for="waitlistCountry" data-i18n="form_country">Country / Region</label>
-          <input type="text" id="waitlistCountry" class="form-control" required placeholder="Jordan" data-i18n-placeholder="waitlist_country_placeholder">
+          <input type="text" id="waitlistCountry" class="form-control" required placeholder="Jordan"
+            data-i18n-placeholder="waitlist_country_placeholder">
         </div>
         <button type="submit" class="submit-btn" data-i18n="waitlist_btn">Notify Me</button>
       </form>
@@ -1834,7 +1837,7 @@
     // Waitlist Form Submission
     const waitlistForm = document.getElementById('waitlistForm');
     if (waitlistForm) {
-      waitlistForm.addEventListener('submit', function (e) {
+      waitlistForm.addEventListener('submit', async function (e) {
         e.preventDefault();
         const name = document.getElementById('waitlistName').value.trim();
         const email = document.getElementById('waitlistEmail').value.trim();
@@ -1843,8 +1846,26 @@
           alert(translateString('fill_all_fields'));
           return;
         }
-        // In a real implementation you would send this data to a backend / mailing list service.
-        alert(translateString('thank_you_alert', { name, email }));
+
+        const submitBtn = waitlistForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = translateString('processing_text') || 'Processing...';
+
+        try {
+          await fetch('/api/notify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, country })
+          });
+        } catch (error) {
+          console.error("Error submitting form:", error);
+        }
+
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+
+        alert("Thanks! We have received your information.");
         waitlistForm.reset();
       });
     }
@@ -2134,9 +2155,9 @@
       document.documentElement.setAttribute('dir', direction);
       document.documentElement.setAttribute('lang', lang === 'ar' ? 'ar' : lang === 'it' ? 'it' : 'en');
       const langSelect = document.getElementById('langSelect');
-        if (langSelect) {
-          langSelect.value = lang;
-        }
+      if (langSelect) {
+        langSelect.value = lang;
+      }
       translateContent(lang);
     }
 
@@ -2156,24 +2177,30 @@
       <form id="checkoutForm">
         <div class="form-group">
           <label data-i18n="checkout_name_label">Full Name</label>
-          <input type="text" class="form-control" required placeholder="John Doe" data-i18n-placeholder="checkout_name_placeholder">
+          <input type="text" class="form-control" required placeholder="John Doe"
+            data-i18n-placeholder="checkout_name_placeholder">
         </div>
         <div class="form-group">
           <label data-i18n="checkout_email_label">Email Address</label>
-          <input type="email" class="form-control" required placeholder="john@example.com" data-i18n-placeholder="checkout_email_placeholder">
+          <input type="email" class="form-control" required placeholder="john@example.com"
+            data-i18n-placeholder="checkout_email_placeholder">
         </div>
         <div class="form-group">
           <label data-i18n="checkout_age_label">Age (18+)</label>
-          <input type="number" id="checkoutAge" class="form-control" required min="18" placeholder="18" data-i18n-placeholder="checkout_age_placeholder">
+          <input type="number" id="checkoutAge" class="form-control" required min="18" placeholder="18"
+            data-i18n-placeholder="checkout_age_placeholder">
         </div>
 
         <div class="form-group">
           <label data-i18n="checkout_payment_label">Payment Method</label>
           <input type="hidden" id="selectedPayment" value="Visa">
           <div class="payment-options">
-            <div class="payment-option selected" id="payment-Visa" onclick="selectPayment('Visa')" data-i18n="payment_visa">Visa</div>
-            <div class="payment-option" id="payment-MasterCard" onclick="selectPayment('MasterCard')" data-i18n="payment_mastercard">MasterCard</div>
-            <div class="payment-option" id="payment-PayPal" onclick="selectPayment('PayPal')" data-i18n="payment_paypal">PayPal</div>
+            <div class="payment-option selected" id="payment-Visa" onclick="selectPayment('Visa')"
+              data-i18n="payment_visa">Visa</div>
+            <div class="payment-option" id="payment-MasterCard" onclick="selectPayment('MasterCard')"
+              data-i18n="payment_mastercard">MasterCard</div>
+            <div class="payment-option" id="payment-PayPal" onclick="selectPayment('PayPal')"
+              data-i18n="payment_paypal">PayPal</div>
           </div>
         </div>
 
