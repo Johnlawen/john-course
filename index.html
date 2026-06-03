@@ -1853,7 +1853,8 @@
         submitBtn.textContent = translateString('processing_text') || 'Processing...';
 
         try {
-          await fetch('/api/notify', {
+          // Replace YOUR_FORM_ID_HERE with your actual Formspree endpoint ID
+          await fetch('https://formspree.io/f/mpqezpdn', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, email, country })
