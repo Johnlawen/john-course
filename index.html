@@ -1867,7 +1867,7 @@
             waitlistForm.reset();
           } else {
             const data = await response.json();
-            if (Object.hasOwn(data, 'errors')) {
+            if (data && data.errors) {
               alert(data.errors.map(error => error.message).join(", "));
             } else {
               alert("Oops! There was a problem submitting your form.");
