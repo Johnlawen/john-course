@@ -1853,21 +1853,33 @@
         submitBtn.textContent = translateString('processing_text') || 'Processing...';
 
         try {
-          // Replace YOUR_FORM_ID_HERE with your actual Formspree endpoint ID
-          await fetch('https://formspree.io/f/mpqezpdn', {
+          const response = await fetch('https://formspree.io/f/mpqezpdn', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
             body: JSON.stringify({ name, email, country })
           });
+          
+          if (response.ok) {
+            alert("Thanks! We have received your information.");
+            waitlistForm.reset();
+          } else {
+            const data = await response.json();
+            if (Object.hasOwn(data, 'errors')) {
+              alert(data.errors.map(error => error.message).join(", "));
+            } else {
+              alert("Oops! There was a problem submitting your form.");
+            }
+          }
         } catch (error) {
           console.error("Error submitting form:", error);
+          alert("Oops! There was a problem submitting your form.");
         }
 
         submitBtn.disabled = false;
         submitBtn.textContent = originalText;
-
-        alert("Thanks! We have received your information.");
-        waitlistForm.reset();
       });
     }
 
