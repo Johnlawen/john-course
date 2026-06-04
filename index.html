@@ -798,6 +798,65 @@
       letter-spacing: 1px;
     }
 
+    /* ── TOAST NOTIFICATION ── */
+    #waitlistToast {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%) translateY(120px);
+      z-index: 99999;
+      min-width: 320px;
+      max-width: 90vw;
+      padding: 20px 28px;
+      border-radius: 4px;
+      font-family: var(--font-body);
+      font-size: 15px;
+      font-weight: 500;
+      text-align: center;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+      transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.45s ease;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #waitlistToast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #waitlistToast.success {
+      background: #0f2a0f;
+      border: 1px solid #4caf50;
+      color: #81e981;
+    }
+
+    #waitlistToast.error {
+      background: #2a0f0f;
+      border: 1px solid #f44336;
+      color: #ff8a80;
+    }
+
+    #waitlistToast .toast-icon {
+      display: block;
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    #waitlistToast .toast-title {
+      font-family: var(--font-heading);
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    #waitlistToast .toast-body {
+      font-size: 13px;
+      opacity: 0.85;
+    }
+
     .form-success-msg p {
       color: var(--gl);
       font-size: 15px;
@@ -1701,8 +1760,7 @@
           <input type="text" id="waitlistCountry" class="form-control" required placeholder="Jordan"
             data-i18n-placeholder="waitlist_country_placeholder">
         </div>
-        <button type="submit" class="submit-btn" data-i18n="waitlist_btn">Notify Me</button>
-        <div id="waitlistMsg" style="margin-top: 15px; font-size: 14px; font-weight: 500; display: none;"></div>
+        <button type="submit" class="submit-btn" id="waitlistSubmitBtn" data-i18n="waitlist_btn">Notify Me</button>
       </form>
     </div>
   </section>
@@ -1835,6 +1893,30 @@
       }, 1200);
     }
 
+    // ── TOAST NOTIFICATION HELPER ──
+    function showToast(type, title, body) {
+      let toast = document.getElementById('waitlistToast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'waitlistToast';
+        document.body.appendChild(toast);
+      }
+      toast.className = type; // 'success' or 'error'
+      toast.innerHTML =
+        '<span class="toast-icon">' + (type === 'success' ? '✅' : '❌') + '</span>' +
+        '<div class="toast-title">' + title + '</div>' +
+        '<div class="toast-body">' + body + '</div>';
+      // Trigger animation
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => { toast.classList.add('show'); });
+      });
+      // Auto-hide after 5 seconds
+      clearTimeout(toast._hideTimer);
+      toast._hideTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 5000);
+    }
+
     // Waitlist Form Submission
     const waitlistForm = document.getElementById('waitlistForm');
     if (waitlistForm) {
@@ -1843,55 +1925,44 @@
         const name = document.getElementById('waitlistName').value.trim();
         const email = document.getElementById('waitlistEmail').value.trim();
         const country = document.getElementById('waitlistCountry').value.trim();
+
         if (!name || !email || !country) {
-          alert(translateString('fill_all_fields'));
+          showToast('error', 'Missing Fields', 'Please fill in all fields before submitting.');
           return;
         }
 
-        const submitBtn = waitlistForm.querySelector('button[type="submit"]');
+        const submitBtn = document.getElementById('waitlistSubmitBtn');
         const originalText = submitBtn.textContent;
         submitBtn.disabled = true;
-        submitBtn.textContent = translateString('processing_text') || 'Processing...';
-
-        const msgDiv = document.getElementById('waitlistMsg');
-        if (msgDiv) msgDiv.style.display = 'none';
+        submitBtn.textContent = 'Sending...';
 
         try {
           const response = await fetch('https://formspree.io/f/mpqezpdn', {
             method: 'POST',
-            headers: { 
+            headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json'
             },
             body: JSON.stringify({ name, email, country })
           });
-          
-          if (msgDiv) msgDiv.style.display = 'block';
+
+          console.log('Formspree response status:', response.status);
+          const data = await response.json();
+          console.log('Formspree response data:', data);
 
           if (response.ok) {
-            if (msgDiv) {
-              msgDiv.style.color = '#4caf50'; // Green
-              msgDiv.textContent = "Thanks! We have received your information.";
-            }
+            showToast('success', 'You\'re on the list!', 'Thanks ' + name + '! We\'ll notify you at ' + email + ' when the course launches.');
             waitlistForm.reset();
           } else {
-            const data = await response.json();
-            if (msgDiv) {
-              msgDiv.style.color = '#f44336'; // Red
-              if (data && data.errors) {
-                msgDiv.textContent = data.errors.map(error => error.message).join(", ");
-              } else {
-                msgDiv.textContent = "Oops! There was a problem submitting your form.";
-              }
-            }
+            const errMsg = (data && data.errors)
+              ? data.errors.map(err => err.message).join(' ')
+              : 'There was a problem. Please try again.';
+            showToast('error', 'Submission Failed', errMsg);
+            console.error('Formspree error:', data);
           }
         } catch (error) {
-          console.error("Error submitting form:", error);
-          if (msgDiv) {
-            msgDiv.style.display = 'block';
-            msgDiv.style.color = '#f44336';
-            msgDiv.textContent = "Oops! There was a problem submitting your form.";
-          }
+          console.error('Network error submitting form:', error);
+          showToast('error', 'Network Error', 'Could not send your info. Check your connection and try again.');
         }
 
         submitBtn.disabled = false;
