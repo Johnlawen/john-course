@@ -1418,28 +1418,49 @@
       color: var(--gold);
     }
 
+    /* ── LANGUAGE SWITCHER ── */
     .lang-switcher {
-      display: none !important;
+      display: flex;
+      align-items: center;
+      position: relative;
+      margin-left: 20px;
     }
+
+
 
     .lang-select {
       appearance: none;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--bdr);
+      -webkit-appearance: none;
+      background: rgba(201, 168, 76, 0.06);
+      border: 1px solid rgba(201, 168, 76, 0.3);
       color: var(--gl);
       font-family: var(--font-body);
       font-size: 11px;
       font-weight: 600;
       letter-spacing: 1.5px;
-      padding: 10px 32px 10px 12px;
+      padding: 8px 32px 8px 12px;
       text-transform: uppercase;
       cursor: pointer;
       outline: none;
       border-radius: 4px;
-      min-width: 120px;
+      min-width: 115px;
       background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%23C9A84C' d='M0 0l5 6 5-6z'/></svg>");
       background-repeat: no-repeat;
       background-position: right 10px center;
+      transition: border-color 0.3s, background 0.3s, color 0.3s;
+    }
+
+    .lang-select:hover,
+    .lang-select:focus {
+      border-color: var(--gold);
+      background: rgba(201, 168, 76, 0.12);
+      color: var(--gold);
+    }
+
+    .lang-select option {
+      background: #1a1a1a;
+      color: var(--w);
+      font-size: 13px;
     }
 
     /* ── RTL SUPPORT ── */
@@ -1533,8 +1554,8 @@
       <a href="https://www.youtube.com/channel/UCBYt_ajnhchyOI2zk2pBBUg" target="_blank" rel="noopener">YOUTUBE</a>
       <a href="https://www.instagram.com/djohnlawen/" target="_blank" rel="noopener">INSTAGRAM</a>
     </div>
-    <div class="lang-switcher">
-      <select class="lang-select" id="langSelect" onchange="setLanguage(this.value)">
+    <div class="lang-switcher" title="Choose Language">
+      <select class="lang-select" id="langSelect" onchange="setLanguage(this.value)" aria-label="Select Language">
         <option value="en">English</option>
         <option value="ar">عربي</option>
         <option value="it">Italiano</option>
@@ -2207,7 +2228,7 @@
     const englishPlaceholders = {};
     const englishStrings = {
       fill_all_fields: 'Please fill in all fields.',
-      thank_you_alert: 'Thank you, {name}! We’ll notify you at {email} when the courses are live.',
+      thank_you_alert: "Thank you, {name}! We'll notify you at {email} when the courses are live.",
       age_alert: 'You must be 18 or older to purchase.',
       payment_success_alert: 'Payment successful! Welcome to the course.',
       processing_text: 'Processing...',
@@ -2260,9 +2281,16 @@
         langSelect.value = lang;
       }
       translateContent(lang);
+      // Persist the chosen language so it survives page refresh
+      try { localStorage.setItem('djl_lang', lang); } catch (e) { }
     }
 
-    setLanguage('en');
+    // On page load, restore the saved language (defaults to 'en')
+    (function initLanguage() {
+      let savedLang = 'en';
+      try { savedLang = localStorage.getItem('djl_lang') || 'en'; } catch (e) { }
+      setLanguage(savedLang);
+    })();
   </script>
 
   <!-- Checkout Modal HTML -->
