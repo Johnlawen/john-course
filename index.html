@@ -1778,6 +1778,12 @@
           <input type="text" id="waitlistCountry" class="form-control" required placeholder="Jordan"
             data-i18n-placeholder="waitlist_country_placeholder">
         </div>
+        <div class="form-group" style="text-align: left; display: flex; align-items: flex-start; gap: 10px;">
+          <input type="checkbox" id="waitlistTerms" required style="margin-top: 4px; cursor: pointer;">
+          <label for="waitlistTerms" style="font-size: 11px; text-transform: none; letter-spacing: 0.5px; line-height: 1.5; font-family: var(--font-body); color: var(--gl); font-weight: normal; margin-bottom: 0;">
+            I have read and agree to the <a href="terms.html" target="_blank" style="color: var(--gold); text-decoration: underline;">Terms of Service, Privacy Policy, and No Refund Policy</a>. I understand that all digital products and courses are non-refundable and that my personal information will remain private and will not be sold to third parties.
+          </label>
+        </div>
         <button type="submit" class="submit-btn" id="waitlistSubmitBtn" data-i18n="waitlist_btn">Notify Me</button>
       </form>
     </div>
@@ -2329,11 +2335,38 @@
           </div>
         </div>
 
+        <div class="form-group" style="text-align: left; display: flex; align-items: flex-start; gap: 10px;">
+          <input type="checkbox" id="checkoutTerms" required style="margin-top: 4px; cursor: pointer;">
+          <label for="checkoutTerms" style="font-size: 11px; text-transform: none; letter-spacing: 0.5px; line-height: 1.5; font-family: var(--font-body); color: var(--gl); font-weight: normal; margin-bottom: 0;">
+            I have read and agree to the <a href="terms.html" target="_blank" style="color: var(--gold); text-decoration: underline;">Terms of Service, Privacy Policy, and No Refund Policy</a>. I understand that all digital products and courses are non-refundable and that my personal information will remain private and will not be sold to third parties.
+          </label>
+        </div>
         <button type="submit" class="submit-btn" id="checkoutSubmitBtn" data-i18n="checkout_btn">Pay Now</button>
       </form>
     </div>
   </div>
 
+  <!-- Cookie Banner -->
+  <div id="cookieBanner" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg3); padding: 20px 40px; border-top: 1px solid var(--bdr); z-index: 10000; text-align: center; box-shadow: 0 -5px 20px rgba(0,0,0,0.5);">
+    <div style="max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 16px;">
+      <p style="margin: 0; font-size: 14px; color: var(--gl); line-height: 1.6;">
+        We use cookies to enhance your browsing experience, serve personalized content, and analyze our traffic. By clicking "Accept", you consent to our use of cookies and our <a href="terms.html" style="color: var(--gold); text-decoration: underline;">Terms & Privacy Policy</a>.
+      </p>
+      <button onclick="acceptCookies()" style="background: var(--gold); color: #000; border: none; padding: 10px 32px; font-family: var(--font-heading); font-weight: 700; text-transform: uppercase; cursor: pointer; letter-spacing: 2px; transition: all 0.3s; font-size: 13px;">Accept</button>
+    </div>
+  </div>
+
+  <script>
+    function acceptCookies() {
+      localStorage.setItem('djl_cookies_accepted', 'true');
+      document.getElementById('cookieBanner').style.display = 'none';
+    }
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!localStorage.getItem('djl_cookies_accepted')) {
+        document.getElementById('cookieBanner').style.display = 'block';
+      }
+    });
+  </script>
 </body>
 
 </html>
