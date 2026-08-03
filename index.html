@@ -1966,7 +1966,6 @@
         submitBtn.textContent = 'Sending...';
 
         try {
-          // Send to Formspree
           const response = await fetch('https://formspree.io/f/mpqezpdn', {
             method: 'POST',
             headers: {
@@ -1975,16 +1974,6 @@
             },
             body: JSON.stringify({ name, email, country })
           });
-
-          // Send to Admin API
-          fetch('/api/notify', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
-            body: JSON.stringify({ name, email, country })
-          }).catch(err => console.error("Admin API Error:", err));
 
           const data = await response.json();
 
