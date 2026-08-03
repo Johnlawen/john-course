@@ -3,6 +3,11 @@ import path from 'path';
 
 export default function handler(req, res) {
   if (req.method === 'GET') {
+    const authHeader = req.headers.authorization;
+    if (authHeader !== 'Bearer john99mn') {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
     try {
       // In Vercel environments, reading local files requires process.cwd()
       const filePath = path.join(process.cwd(), 'api', 'submissions.json');

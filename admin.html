@@ -57,6 +57,61 @@
     
     .header h1 span { color: var(--gold); }
 
+    /* Login Specific Styles */
+    .login-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 40vh;
+    }
+    .login-box {
+      background: var(--bg2);
+      border: 1px solid var(--bdr);
+      padding: 40px;
+      text-align: center;
+      width: 100%;
+      max-width: 400px;
+    }
+    .login-box input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--bdr);
+      color: var(--w);
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      outline: none;
+      font-family: var(--font-body);
+    }
+    .login-box input:focus {
+      border-color: var(--gold);
+    }
+    .login-box button {
+      width: 100%;
+      background: var(--gold);
+      color: #000;
+      border: none;
+      padding: 14px;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .login-box button:hover {
+      background: var(--gold-light);
+    }
+    .error-msg {
+      color: #ff4a4a;
+      font-size: 12px;
+      margin-top: 14px;
+      display: none;
+    }
+
+    /* Dashboard Styles */
     .card {
       background: var(--bg2);
       border: 1px solid var(--bdr);
@@ -172,10 +227,27 @@
 </head>
 <body>
 
-  <div class="container">
+  <!-- LOGIN SECTION -->
+  <div class="container" id="login-section">
+    <div class="header">
+      <h1>Admin <span>Login</span></h1>
+      <a href="index.html" style="color: var(--gl); text-decoration: none; font-size: 12px; letter-spacing: 1px; text-transform: uppercase;">&larr; Back to Site</a>
+    </div>
+    
+    <div class="login-wrapper">
+      <div class="login-box">
+        <input type="password" id="password-input" placeholder="Enter Admin Password" onkeydown="if(event.key === 'Enter') handleLogin()" />
+        <button onclick="handleLogin()">Login</button>
+        <div id="login-error" class="error-msg">Incorrect password. Please try again.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD SECTION -->
+  <div class="container" id="dashboard-section" style="display: none;">
     <div class="header">
       <h1>Admin <span>Panel</span></h1>
-      <a href="index.html" style="color: var(--gl); text-decoration: none; font-size: 12px; letter-spacing: 1px; text-transform: uppercase;">&larr; Back to Site</a>
+      <button onclick="logout()" class="action-btn" style="border: none; font-size: 12px; letter-spacing: 1px;">Logout &rarr;</button>
     </div>
     
     <div class="stats">
@@ -208,55 +280,126 @@
   </div>
 
   <script>
-    async function fetchSubmissions() {
+    let adminToken = '';
+
+    // Automatically try to login if token exists in sessionStorage
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedToken = sessionStorage.getItem('adminToken');
+      if (savedToken) {
+        adminToken = savedToken;
+        document.getElementById('login-section').style.display = 'none';
+        document.getElementById('dashboard-section').style.display = 'block';
+        fetchSubmissions();
+      }
+    });
+
+    async function handleLogin() {
+      const pass = document.getElementById('password-input').value;
+      const errorMsg = document.getElementById('login-error');
+      errorMsg.style.display = 'none';
+      
+      if (!pass) return;
+
+      adminToken = pass;
+      
+      // Test the token
       try {
-        const res = await fetch('/api/get-submissions');
-        if (!res.ok) throw new Error('Network response was not ok');
-        const data = await res.json();
+        const res = await fetch('/api/get-submissions', {
+          headers: { 'Authorization': `Bearer ${adminToken}` }
+        });
         
-        document.getElementById('loader').style.display = 'none';
-        
-        if (data && data.length > 0) {
-          document.getElementById('total-count').textContent = data.length;
-          document.getElementById('submissions-table').style.display = 'table';
+        if (res.ok) {
+          // Success
+          sessionStorage.setItem('adminToken', adminToken);
+          document.getElementById('login-section').style.display = 'none';
+          document.getElementById('dashboard-section').style.display = 'block';
           
-          const tbody = document.getElementById('table-body');
-          // Sort by date descending
-          data.sort((a, b) => new Date(b.date) - new Date(a.date));
-          
-          data.forEach(sub => {
-            const tr = document.createElement('tr');
-            
-            const d = new Date(sub.date);
-            const formattedDate = !isNaN(d.getTime()) 
-              ? d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) 
-              : 'N/A';
-            
-            // Email subject and body template
-            const subject = encodeURIComponent('DJL Course — You are on the list!');
-            const body = encodeURIComponent(`Hi ${sub.name},\n\nThanks for signing up to the waitlist for the upcoming DJ course.\n\nWe will let you know as soon as the course launches.\n\nBest,\nDJL Team`);
-            
-            tr.innerHTML = `
-              <td>${formattedDate}</td>
-              <td class="name">${sub.name}</td>
-              <td>${sub.email}</td>
-              <td>${sub.country || 'N/A'}</td>
-              <td>
-                <a href="mailto:${sub.email}?subject=${subject}&body=${body}" class="action-btn">Send Email</a>
-              </td>
-            `;
-            tbody.appendChild(tr);
-          });
+          const data = await res.json();
+          renderData(data);
         } else {
-          document.getElementById('empty-state').style.display = 'block';
+          // Unauthorized
+          errorMsg.style.display = 'block';
         }
       } catch (err) {
-        console.error('Error fetching submissions:', err);
-        document.getElementById('loader').textContent = 'Failed to load submissions. (Are you running locally with Vercel CLI?)';
+        console.error(err);
+        errorMsg.textContent = 'Server error. Are you running locally?';
+        errorMsg.style.display = 'block';
       }
     }
 
-    document.addEventListener('DOMContentLoaded', fetchSubmissions);
+    function logout() {
+      sessionStorage.removeItem('adminToken');
+      adminToken = '';
+      document.getElementById('password-input').value = '';
+      document.getElementById('login-section').style.display = 'block';
+      document.getElementById('dashboard-section').style.display = 'none';
+      document.getElementById('submissions-table').style.display = 'none';
+      document.getElementById('loader').style.display = 'block';
+      document.getElementById('empty-state').style.display = 'none';
+    }
+
+    async function fetchSubmissions() {
+      try {
+        const res = await fetch('/api/get-submissions', {
+          headers: { 'Authorization': `Bearer ${adminToken}` }
+        });
+        
+        if (!res.ok) {
+          if (res.status === 401) {
+             logout();
+             return;
+          }
+          throw new Error('Network response was not ok');
+        }
+        
+        const data = await res.json();
+        renderData(data);
+      } catch (err) {
+        console.error('Error fetching submissions:', err);
+        document.getElementById('loader').textContent = 'Failed to load submissions.';
+      }
+    }
+
+    function renderData(data) {
+      document.getElementById('loader').style.display = 'none';
+      
+      if (data && data.length > 0) {
+        document.getElementById('total-count').textContent = data.length;
+        document.getElementById('submissions-table').style.display = 'table';
+        
+        const tbody = document.getElementById('table-body');
+        tbody.innerHTML = ''; // clear out
+        
+        // Sort by date descending
+        data.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        data.forEach(sub => {
+          const tr = document.createElement('tr');
+          
+          const d = new Date(sub.date);
+          const formattedDate = !isNaN(d.getTime()) 
+            ? d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) 
+            : 'N/A';
+          
+          // Email subject and body template
+          const subject = encodeURIComponent('DJL Course — You are on the list!');
+          const body = encodeURIComponent(`Hi ${sub.name},\n\nThanks for signing up to the waitlist for the upcoming DJ course.\n\nWe will let you know as soon as the course launches.\n\nBest,\nDJL Team`);
+          
+          tr.innerHTML = `
+            <td>${formattedDate}</td>
+            <td class="name">${sub.name}</td>
+            <td>${sub.email}</td>
+            <td>${sub.country || 'N/A'}</td>
+            <td>
+              <a href="mailto:${sub.email}?subject=${subject}&body=${body}" class="action-btn">Send Email</a>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } else {
+        document.getElementById('empty-state').style.display = 'block';
+      }
+    }
   </script>
 </body>
 </html>
